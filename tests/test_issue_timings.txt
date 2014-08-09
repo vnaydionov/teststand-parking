@@ -1,0 +1,22 @@
+vaclav@vaclav-desktop-linux:~/work/parkingxx-build0/src$ time python test_issue.py 1000 'http://localhost:8111/issue_ticket?parking_id=15001&version=2' &> out1
+
+real	0m28.343s
+user	0m0.812s
+sys	0m0.360s
+vaclav@vaclav-desktop-linux:~/work/parkingxx-build0/src$ time python test_issue.py 1000 'http://localhost:8112/parking/issue_ticket?parking_id=15001&version=2' &> out2
+
+real	0m19.705s
+user	0m0.584s
+sys	0m0.232s
+vaclav@vaclav-desktop-linux:~/work/parkingxx-build0/src$ time python test_issue.py 1000 'http://localhost:8111/issue_ticket?parking_id=15001&version=2' &> out3
+
+real	0m29.195s
+user	0m0.924s
+sys	0m0.264s
+vaclav@vaclav-desktop-linux:~/work/parkingxx-build0/src$ time python test_issue.py 1000 'http://localhost:8112/parking/issue_ticket?parking_id=15001&version=2' &> out4
+
+real	0m19.747s
+user	0m0.560s
+sys	0m0.248s
+vaclav@vaclav-desktop-linux:~/work/parkingxx-build0/src$ 
+
