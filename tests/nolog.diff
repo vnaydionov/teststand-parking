@@ -1,0 +1,75 @@
+diff --git a/parking/server.py b/parking/server.py
+index 7e43f13..1312172 100644
+--- a/parking/server.py
++++ b/parking/server.py
+@@ -65,13 +65,13 @@ def run_server():
+     httpd.serve_forever()
+ 
+ if __name__ == '__main__':
+-    logging.basicConfig(
+-            filename='parking.log',
+-            format='%(asctime)s %(thread)d %(levelname)s %(name)s %(message)s',
+-            datefmt='%Y-%m-%d %H:%M:%S')
+-    root_logger = logging.getLogger('')
+-    root_logger.setLevel(logging.DEBUG)
+-    sql_logger = logging.getLogger('sqlalchemy.engine')
+-    sql_logger.setLevel(logging.DEBUG)
++##    logging.basicConfig(
++##            filename='parking.log',
++##            format='%(asctime)s %(thread)d %(levelname)s %(name)s %(message)s',
++##            datefmt='%Y-%m-%d %H:%M:%S')
++##    root_logger = logging.getLogger('')
++##    root_logger.setLevel(logging.DEBUG)
++##    sql_logger = logging.getLogger('sqlalchemy.engine')
++##    sql_logger.setLevel(logging.DEBUG)
+     run_server()
+ 
+diff --git a/parkingxx/src/app_class.cpp b/parkingxx/src/app_class.cpp
+index 56cab63..5ff26d5 100644
+--- a/parkingxx/src/app_class.cpp
++++ b/parkingxx/src/app_class.cpp
+@@ -4,13 +4,21 @@
+ 
+ using namespace std;
+ 
++class FakeAppender: public Yb::ILogAppender
++{
++public:
++    virtual void append(const Yb::LogRecord &rec) {
++        // do nothing
++    }
++};
++
+ void App::init_log(const string &log_name)
+ {
+     if (!log_.get()) {
+         file_stream_.reset(new ofstream(log_name.c_str(), ios::app));
+         if (file_stream_->fail())
+             throw runtime_error("can't open logfile: " + log_name);
+-        appender_.reset(new Yb::LogAppender(*file_stream_));
++        appender_.reset(new FakeAppender());
+         log_.reset(new Yb::Logger(appender_.get()));
+         info("log started");
+     }
+@@ -42,7 +50,7 @@ App::~App()
+     engine_.reset(NULL);
+     if (log_.get()) {
+         info("log finished");
+-        appender_->flush();
++        //appender_->flush();
+         file_stream_->close();
+     }
+     log_.reset(NULL);
+diff --git a/parkingxx/src/app_class.h b/parkingxx/src/app_class.h
+index 6dcb955..043d53f 100644
+--- a/parkingxx/src/app_class.h
++++ b/parkingxx/src/app_class.h
+@@ -11,7 +11,7 @@
+ class App: public Yb::ILogger
+ {
+     std::auto_ptr<std::ofstream> file_stream_;
+-    std::auto_ptr<Yb::LogAppender> appender_;
++    std::auto_ptr<Yb::ILogAppender> appender_;
+     Yb::ILogger::Ptr log_;
+     std::auto_ptr<Yb::Engine> engine_;
+ 
