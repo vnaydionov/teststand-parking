@@ -12,7 +12,7 @@ from decimal import Decimal
 import unittest
 import optparse
 
-from parking_partner import ParkingPartner
+from parking_stand import ParkingStand
 
 class TestParkingHTTP(unittest.TestCase):
     target_version = None
@@ -36,7 +36,7 @@ class TestParkingHTTP(unittest.TestCase):
     def setUp(self):
         super(TestParkingHTTP, self).setUp()
         self.delay = 15
-        self.iface = ParkingPartner(self.stand_uri, self.delay,
+        self.iface = ParkingStand(self.stand_uri, self.delay,
                 version=self.target_version)
         self.logger = logging.getLogger('comment')
 
@@ -136,7 +136,7 @@ class TestParkingHTTP(unittest.TestCase):
         supported = []
         for ver in range(3):
             log.debug(u'Проверяю поддержку версии %d' % ver)
-            test_iface = ParkingPartner(self.iface.url, self.iface.timeout,
+            test_iface = ParkingStand(self.iface.url, self.iface.timeout,
                     version=ver)
             r = test_iface.get_service_info(self.mk_service_descr(
                     parking_id=parking_id, duration=hours*60,

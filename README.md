@@ -8,18 +8,6 @@ of object-relational mapper.  Here are two implementations
  * C++ with YB.ORM.
 
 The application consists of a minimal HTTP server.
-The server handles GET/POST requests of the following types:
- * /get_service_info
- * /create_reservation
- * /pay_reservation
- * /cancel_reservation
- * /stop_service
- * /get_user_account
- * /account_transfer
- * /issue_ticket
- * /leave_parking
- * /check_plate_number
-
 See the unit tests for the protocol documentation.
 
 

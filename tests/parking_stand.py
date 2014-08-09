@@ -5,9 +5,9 @@ import logging
 
 from http_util import split_url, http_post
 
-log = logging.getLogger('parking_partner')
+log = logging.getLogger('parking_stand')
 
-class ParkingPartner(object):
+class ParkingStand(object):
     def __init__(self, url, timeout, version=None):
         self.url = url
         self.timeout = timeout
@@ -26,24 +26,24 @@ class ParkingPartner(object):
                     method='GET', path_add=method, timeout=self.timeout)
         except Exception, e:
             log.exception('')
-            return {'method': 'ParkingPartner.%s' % method,
+            return {'method': 'ParkingStand.%s' % method,
                     'status': 'error',
                     'status_desc': 'network error: %s(%s)' % (
                         e.__class__.__name__, str(e))}
         if code != 200:
-            return {'method': 'ParkingPartner.%s' % method,
+            return {'method': 'ParkingStand.%s' % method,
                     'status': 'error',
                     'status_desc': 'http error: %s: %s' % (code, desc)}
         try:
             parsed_body = json.loads(body)
         except ValueError, e:
-            return {'method': 'ParkingPartner.%s' % method,
+            return {'method': 'ParkingStand.%s' % method,
                     'status': 'error',
                     'status_desc': 'JSON parsing error'}
         if not isinstance(parsed_body, dict) or \
                 'status' not in parsed_body.keys() or \
                 'ts' not in parsed_body.keys():
-            return {'method': 'ParkingPartner.%s' % method,
+            return {'method': 'ParkingStand.%s' % method,
                     'status': 'error',
                     'status_desc': 'invalid response structure'}
         if 'price' in parsed_body.keys():
