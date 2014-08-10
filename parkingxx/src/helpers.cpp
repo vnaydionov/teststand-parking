@@ -51,7 +51,7 @@ const StringDict json2dict(const string &json_str) {
     string key, value;
     enum { OutOfBraces, InBraces, InKey, AfterKey, AfterColon,
            InStrValue, InValue, AfterValue } st = OutOfBraces;
-    for (int i = 0; i < json_str.size(); ++i) {
+    for (size_t i = 0; i < json_str.size(); ++i) {
         char c = json_str[i];
         if (st == OutOfBraces) {
             if (c == '{') {

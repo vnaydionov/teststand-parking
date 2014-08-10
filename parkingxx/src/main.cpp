@@ -6,6 +6,9 @@
 #include "domain/AccountReceipt.h"
 #include "domain/AccountConsume.h"
 #include "domain/AccountTransfer.h"
+#ifdef _MSC_VER
+#pragma warning(disable:4996)
+#endif // _MSC_VER
 
 using namespace std;
 using namespace Yb;
@@ -62,7 +65,7 @@ Order get_order_by_ticket(Session &session, Product &parking,
     return order;
 }
 
-Order get_hours_and_price(Session &session,
+Order get_hours_and_price(Session &session, ILogger &logger,
         const StringDict &service_descr, Product &parking, bool lock,
         Decimal &hours, Decimal &price)
 {
@@ -183,8 +186,8 @@ ElementTree::ElementPtr get_service_info(Session &session, ILogger &logger,
         throw ApiResult(mk_resp("not_available", "invalid_parking_id"));
     }
     Decimal price, hours;
-    Order order(get_hours_and_price(
-            session, service_descr, parking, false, hours, price));
+    Order order(get_hours_and_price(session, logger,
+                service_descr, parking, false, hours, price));
     ElementTree::ElementPtr resp = mk_resp("success");
     resp->add_json("price", money2str(price));
     ElementTree::ElementPtr info = resp->add_json_dict("info");
@@ -243,7 +246,7 @@ ElementTree::ElementPtr create_reservation(Session &session, ILogger &logger,
     catch (const NoDataFound &) {}
     Decimal price, hours;
     Order order(get_hours_and_price(
-            session, service_descr, parking, true, hours, price));
+            session, logger, service_descr, parking, true, hours, price));
     if (price != price0)
         throw ApiResult(mk_resp("wrong_price"));
     if (parking.places_avail == 0)
@@ -301,7 +304,7 @@ ElementTree::ElementPtr pay_reservation(Session &session, ILogger &logger,
     payment.payment_ts = now_ts;
     order.paid_amount = order.paid_amount + payment.amount;
     order.paid_until_ts = dt_add_seconds(order.paid_until_ts,
-            (payment.hours * 3600).ipart());
+            (int)(payment.hours * 3600).ipart());
     if (order.ticket_number == Value() && now_ts < order.paid_until_ts) {
         Product product = query<Product>(session).for_update()
                 .filter_by(Product::c.id == order.product->id).one();
@@ -334,7 +337,7 @@ ElementTree::ElementPtr cancel_reservation(Session &session, ILogger &logger,
     if (payment.payment_ts != Value()) {
         order.paid_amount = order.paid_amount - payment.amount;
         order.paid_until_ts = dt_add_seconds(order.paid_until_ts,
-                -(payment.hours * 3600).ipart());
+                - (int)(payment.hours * 3600).ipart());
         if (order.ticket_number == Value() && now_ts >= order.paid_until_ts) {
             order.finish_ts = now_ts;
             Product product = query<Product>(session).for_update()
@@ -381,7 +384,7 @@ ElementTree::ElementPtr stop_service(Session &session, ILogger &logger,
         resp->add_json("delta_amount", money2str(Decimal(0)));
         throw ApiResult(resp);
     }
-    int total_secs_left = datetime_diff(now_ts, order.paid_until_ts) - 1;
+    int total_secs_left = (int)datetime_diff(now_ts, order.paid_until_ts) - 1;
     int duration_left = (total_secs_left / (15 * 60)) * 15; // rounded minutes
     Decimal price_per_minute = order.paid_amount / Decimal(datetime_diff(
                 order.start_ts, order.paid_until_ts) / 60);
@@ -498,7 +501,7 @@ ElementTree::ElementPtr check_plate_number(Session &session, ILogger &logger,
         const StringDict &params) {
     string plate_number = params["registration_plate"];
     YB_ASSERT(!plate_number.empty());
-    int active_orders_count = query<Order>(session).filter_by(
+    LongInt active_orders_count = query<Order>(session).filter_by(
             (Order::c.plate_number == plate_number) &&
             (Order::c.paid_until_ts > now()) &&
             (Order::c.finish_ts == Value())).count();

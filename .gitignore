@@ -1,0 +1,53 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# Autotools stuff
+.deps
+.libs
+Makefile
+Makefile.in
+aclocal.m4
+autom4te.cache
+config.guess
+config.h
+config.h.in
+config.log
+config.status
+config.sub
+configure
+depcomp
+install-sh
+libtool
+ltmain.sh
+missing
+stamp-h1
+
+compile
+test-driver
+
+# Editors' temporary and backup files
+*.swp
+*.bak
+*~
+
+# Project specific executables, etc.
+src/parkingxx
+src/parkingxx.sh
+src/domain/*.cpp
+src/domain/*.h
+src/domain/*.sql
+
+*.pyc
+*.log
+
