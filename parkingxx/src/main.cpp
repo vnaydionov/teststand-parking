@@ -548,6 +548,7 @@ public:
             return dump_result(*logger, ex.result());
         }
         catch (const exception &ex) {
+            logger->error(string("exception: ") + ex.what());
             return dump_result(*logger, mk_resp(default_status_));
         }
     }

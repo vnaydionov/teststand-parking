@@ -36,8 +36,10 @@ Start MSVC command prompt and type:
 
 mkdir c:\Users\user1\parkingxx.build
 cd c:\Users\user1\parkingxx.build
-cmake -DCMAKE_INSTALL_PREFIX=c:/Users/user1/parkingxx.inst
-  -DYBORM_ROOT=c:/Users/user1/yborm-0.4.5-msvc2010 ../teststand-parking/parkingxx
+cmake -G "NMake Makefiles" 
+  -D CMAKE_INSTALL_PREFIX:PATH=c:/Users/user1/parkingxx.inst 
+  -D YBORM_ROOT:PATH=c:/Users/user1/yborm-0.4.5-msvc2010 
+  ../teststand-parking/parkingxx
 nmake
 nmake install
 
