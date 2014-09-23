@@ -1,5 +1,5 @@
 
-SUBDIRS=domain
+#SUBDIRS=domain
 AUTOMAKE_OPTIONS = subdir-objects
 
 AM_CXXFLAGS=\
@@ -16,18 +16,20 @@ bin_PROGRAMS=parkingxx
 bin_SCRIPTS=parkingxx.sh
 
 parkingxx_SOURCES=\
-	domain/Product.cpp \
-	domain/Order.cpp \
-	domain/Account.cpp \
-	domain/Payment.cpp \
-	domain/AccountReceipt.cpp \
-	domain/AccountConsume.cpp \
-	domain/AccountTransfer.cpp \
 	tcp_socket.cpp \
 	micro_http.cpp \
 	app_class.cpp \
 	helpers.cpp \
 	main.cpp
+
+#	domain/Product.cpp \
+#	domain/Order.cpp \
+#	domain/Account.cpp \
+#	domain/Payment.cpp \
+#	domain/AccountReceipt.cpp \
+#	domain/AccountConsume.cpp \
+#	domain/AccountTransfer.cpp
+
 
 parkingxx_LDFLAGS=\
 	$(XML_LIBS) \

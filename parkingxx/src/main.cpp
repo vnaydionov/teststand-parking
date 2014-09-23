@@ -1,18 +1,19 @@
 #include "helpers.h"
-#include "domain/Order.h"
-#include "domain/Product.h"
-#include "domain/Account.h"
-#include "domain/Payment.h"
-#include "domain/AccountReceipt.h"
-#include "domain/AccountConsume.h"
-#include "domain/AccountTransfer.h"
+#include "model.h"
 #ifdef _MSC_VER
 #pragma warning(disable:4996)
 #endif // _MSC_VER
 
+YB_DEFINE(Product)
+YB_DEFINE(Order)
+YB_DEFINE(Payment)
+YB_DEFINE(Account)
+YB_DEFINE(AccountReceipt)
+YB_DEFINE(AccountConsume)
+YB_DEFINE(AccountTransfer)
+
 using namespace std;
 using namespace Yb;
-using namespace Domain;
 
 ElementTree::ElementPtr mk_resp(const string &status,
         const string &status_code = "")
