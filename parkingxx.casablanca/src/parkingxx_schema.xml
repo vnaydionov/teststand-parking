@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<schema>
+    <table name="T_PRODUCT" sequence="S_PRODUCT" class="Product" xml-name="product">
+        <column name="ID" type="longint">
+            <primary-key />
+        </column>
+        <column name="NAME" type="string" size="100" null="false" />
+        <column name="DISPLAY_NAME" type="string" size="200" null="false" />
+        <column name="PLACES_AVAIL" type="integer" null="false" />
+        <column name="PRICE" type="decimal" null="false" />
+    </table>
+    <table name="T_ORDER" sequence="S_ORDER" class="Order" xml-name="order">
+        <column name="ID" type="longint">
+            <primary-key />
+        </column>
+        <column name="PRODUCT_ID" type="longint" null="false">
+            <foreign-key table="T_PRODUCT" />
+        </column>
+        <column name="USER_EID" type="string" size="100" />
+        <column name="TICKET_NUMBER" type="string" size="100" />
+        <column name="PLATE_NUMBER" type="string" size="20" />
+        <column name="START_TS" type="datetime" null="false" default="sysdate" />
+        <column name="PAID_UNTIL_TS" type="datetime" null="false" />
+        <column name="FINISH_TS" type="datetime" />
+        <column name="PAID_AMOUNT" type="decimal" null="false" default="0" />
+        <column name="PRICE" type="decimal" />
+    </table>
+    <table name="T_PAYMENT" sequence="S_PAYMENT" class="Payment" xml-name="payment">
+        <column name="ID" type="longint">
+            <primary-key />
+        </column>
+        <column name="TRANS_NUMBER" type="string" size="100" null="false" />
+        <column name="ORDER_ID" type="longint" null="false">
+            <foreign-key table="T_ORDER" />
+        </column>
+        <column name="TS" type="datetime" null="false" default="sysdate" />
+        <column name="HOURS" type="decimal" null="false" />
+        <column name="AMOUNT" type="decimal" null="false" />
+        <column name="PAYMENT_TS" type="datetime" />
+        <column name="CANCEL_TS" type="datetime" />
+    </table>
+    <table name="T_ACCOUNT" sequence="S_ACCOUNT" class="Account" xml-name="account">
+        <column name="ID" type="longint">
+            <primary-key />
+        </column>
+        <column name="USER_EID" type="string" size="100" null="false" />
+        <column name="BALANCE" type="decimal" null="false" default="0" />
+        <column name="RESERVED" type="decimal" null="false" default="0" />
+    </table>
+    <table name="T_ACCOUNT_RECEIPT" sequence="S_ACCOUNT_RECEIPT" class="AccountReceipt" xml-name="account_receipt">
+        <column name="ID" type="longint">
+            <primary-key />
+        </column>
+        <column name="TS" type="datetime" null="false" default="sysdate" />
+        <column name="ACCOUNT_ID" type="longint" null="false">
+            <foreign-key table="T_ACCOUNT" />
+        </column>
+        <column name="SRC_ORDER_ID" type="longint" null="false">
+            <foreign-key table="T_ORDER" />
+        </column>
+        <column name="AMOUNT" type="decimal" null="false" />
+    </table>
+    <table name="T_ACCOUNT_CONSUME" sequence="S_ACCOUNT_CONSUME" class="AccountConsume" xml-name="account_consume">
+        <column name="ID" type="longint">
+            <primary-key />
+        </column>
+        <column name="TS" type="datetime" null="false" default="sysdate" />
+        <column name="ACCOUNT_ID" type="longint" null="false">
+            <foreign-key table="T_ACCOUNT" />
+        </column>
+        <column name="DST_PAYMENT_ID" type="longint" null="false">
+            <foreign-key table="T_PAYMENT" />
+        </column>
+        <column name="AMOUNT" type="decimal" null="false" />
+        <column name="IS_RESERVED" type="integer" null="false" />
+    </table>
+    <table name="T_ACCOUNT_TRANSFER" sequence="S_ACCOUNT_TRANSFER" class="AccountTransfer" xml-name="account_transfer">
+        <column name="ID" type="longint">
+            <primary-key />
+        </column>
+        <column name="TS" type="datetime" null="false" default="sysdate" />
+        <column name="TRANS_NUMBER" type="string" size="100" null="false" />
+        <column name="SRC_ACCOUNT_ID" type="longint" null="false">
+            <foreign-key table="T_ACCOUNT" />
+        </column>
+        <column name="DST_ACCOUNT_ID" type="longint" null="false">
+            <foreign-key table="T_ACCOUNT" />
+        </column>
+        <column name="AMOUNT" type="decimal" null="false" />
+    </table>
+    <relation type="one-to-many">
+        <one class="Product" />
+        <many class="Order" property="product" />
+    </relation>
+    <relation type="one-to-many">
+        <one class="Order" property="payments" />
+        <many class="Payment" property="order" />
+    </relation>
+    <relation type="one-to-many">
+        <one class="Account" property="receipts" />
+        <many class="AccountReceipt" property="account" />
+    </relation>
+    <relation type="one-to-many">
+        <one class="Order" property="receipts" />
+        <many class="AccountReceipt" property="src_order" />
+    </relation>
+    <relation type="one-to-many">
+        <one class="Account" property="consumes" />
+        <many class="AccountConsume" property="account" />
+    </relation>
+    <relation type="one-to-many">
+        <one class="Payment" property="consumes" />
+        <many class="AccountConsume" property="dst_payment" />
+    </relation>
+    <relation type="one-to-many">
+        <one class="Account" />
+        <many class="AccountTransfer" property="src_account" key="SRC_ACCOUNT_ID" />
+    </relation>
+    <relation type="one-to-many">
+        <one class="Account" />
+        <many class="AccountTransfer" property="dst_account" key="DST_ACCOUNT_ID" />
+    </relation>
+</schema>
