@@ -15,20 +15,6 @@ YB_DEFINE(AccountTransfer)
 using namespace std;
 using namespace Yb;
 
-ElementTree::ElementPtr mk_resp(const string &status,
-        const string &status_code = "")
-{
-    ElementTree::ElementPtr res(ElementTree::new_json_dict());
-    res->add_json_string("status", status);
-    if (!status_code.empty())
-        res->add_json_string("status_code", status_code);
-    char buf[40];
-    MilliSec t = get_cur_time_millisec();
-    sprintf(buf, "%u.%03u", (unsigned)(t/1000), (unsigned)(t%1000));
-    res->add_json("ts", buf);
-    return res;
-}
-
 const Decimal round_hours(const Decimal &hours, bool first_hour) {
     LongInt minutes = (hours * 60).ipart();
     YB_ASSERT(minutes >= 0 && minutes < 1000000000);
@@ -511,55 +497,6 @@ ElementTree::ElementPtr check_plate_number(Session &session, ILogger &logger,
     throw ApiResult(res);
 }
 
-typedef ElementTree::ElementPtr (*HttpHandler)(
-        Session &session, ILogger &logger,
-        const StringDict &params);
-
-class ParkingHttpWrapper
-{
-    string name_, default_status_;
-    HttpHandler f_;
-    string dump_result(ILogger &logger, ElementTree::ElementPtr res)
-    {
-        string res_str = etree2json(res);
-        logger.info("result: " + res_str);
-        return res_str;
-    }
-public:
-    ParkingHttpWrapper(): f_(NULL) {}
-    ParkingHttpWrapper(const string &name, HttpHandler f,
-            const string &default_status = "not_available")
-        : name_(name), default_status_(default_status), f_(f)
-    {}
-    const string &name() const { return name_; }
-    string operator() (const StringDict &params)
-    {
-        ILogger::Ptr logger(theApp::instance().new_logger(name_));
-        TimerGuard t(*logger);
-        try {
-            logger->info("started, params: " + dict2str(params));
-            int version = params.get_as<int>("version");
-            YB_ASSERT(version >= 2);
-            auto_ptr<Session> session(
-                    theApp::instance().new_session());
-            ElementTree::ElementPtr res = f_(*session, *logger, params);
-            session->commit();
-            t.set_ok();
-            return dump_result(*logger, res);
-        }
-        catch (const ApiResult &ex) {
-            t.set_ok();
-            return dump_result(*logger, ex.result());
-        }
-        catch (const exception &ex) {
-            logger->error(string("exception: ") + ex.what());
-            return dump_result(*logger, mk_resp(default_status_));
-        }
-    }
-};
-
-#define WRAP(func) ParkingHttpWrapper(#func, func)
-
 int main(int argc, char *argv[])
 {
     string log_name = "parkingxx.log";
@@ -568,7 +505,7 @@ int main(int argc, char *argv[])
     string error_body = "{\"status\": \"internal_error\"}";
     string prefix = "/parking/";
     int port = 8112;
-    ParkingHttpWrapper handlers[] = {
+    JsonHttpWrapper handlers[] = {
         WRAP(get_service_info),
         WRAP(create_reservation),
         WRAP(pay_reservation),

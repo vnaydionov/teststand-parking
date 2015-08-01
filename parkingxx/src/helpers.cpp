@@ -147,14 +147,4 @@ void randomize()
     rand();
 }
 
-TimerGuard::~TimerGuard()
-{
-    ostringstream out;
-    out << "finished";
-    if (except_)
-        out << " with an exception";
-    out << ", " << time_spent() << " ms";
-    logger_.info(out.str());
-}
-
 // vim:ts=4:sts=4:sw=4:et:
