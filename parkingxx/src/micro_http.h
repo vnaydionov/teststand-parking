@@ -1,6 +1,7 @@
 #ifndef _AUTH__MICRO_HTTP_H_
 #define _AUTH__MICRO_HTTP_H_
 
+#include <boost/lexical_cast.hpp>
 #include <util/data_types.h>
 #include <util/string_utils.h>
 #include <util/nlogger.h>
@@ -15,16 +16,16 @@ public: HttpParserError(const std::string &ctx, const std::string &msg)
     : std::runtime_error(ctx + ": " + msg) {}
 };
 
-class HttpHeaders
+class HttpMessage
 {
 public:
-    HttpHeaders()
+    HttpMessage()
         : is_a_request_(true)
         , proto_ver_(10)
         , resp_code_(0)
     {}
 
-    HttpHeaders(const Yb::String &method, const Yb::String &uri, int proto_ver)
+    HttpMessage(const Yb::String &method, const Yb::String &uri, int proto_ver)
         : is_a_request_(true)
         , method_(Yb::StrUtils::str_to_upper(method))
         , uri_(uri)
@@ -32,35 +33,35 @@ public:
         , resp_code_(0)
     {
         if (!Yb::str_length(method))
-            throw HttpParserError("HttpHeaders", "Empty HTTP method");
+            throw HttpParserError("HttpMessage", "Empty HTTP method");
         if (!Yb::str_length(uri))
-            throw HttpParserError("HttpHeaders", "Empty URI");
+            throw HttpParserError("HttpMessage", "Empty URI");
         if (proto_ver != 11 && proto_ver != 10)
-            throw HttpParserError("HttpHeaders", "Invalid protocol version: " +
+            throw HttpParserError("HttpMessage", "Invalid protocol version: " +
                                   boost::lexical_cast<std::string>(proto_ver));
         Yb::Strings uri_parts;
         Yb::StrUtils::split_str_by_chars(uri, _T("?"), uri_parts, 2);
         if (uri_parts.size() < 1)
-            throw HttpParserError("HttpHeaders", "uri_parts.size() < 1");
+            throw HttpParserError("HttpMessage", "uri_parts.size() < 1");
         path_ = uri_parts[0];
         if (uri_parts.size() > 1)
             params_ = parse_params(uri_parts[1]);
     }
 
-    HttpHeaders(int proto_ver, int resp_code, const Yb::String &resp_desc)
+    HttpMessage(int proto_ver, int resp_code, const Yb::String &resp_desc)
         : is_a_request_(false)
         , proto_ver_(proto_ver)
         , resp_code_(resp_code)
         , resp_desc_(resp_desc)
     {
         if (proto_ver != 11 && proto_ver != 10)
-            throw HttpParserError("HttpHeaders", "Invalid protocol version: " +
+            throw HttpParserError("HttpMessage", "Invalid protocol version: " +
                                   boost::lexical_cast<std::string>(proto_ver));
         if (resp_code < 100 || resp_code >= 600)
-            throw HttpParserError("HttpHeaders", "Invalid response code: " +
+            throw HttpParserError("HttpMessage", "Invalid response code: " +
                                   boost::lexical_cast<std::string>(resp_code));
         if (!Yb::str_length(resp_desc))
-            throw HttpParserError("HttpHeaders", "Empty HTTP resp_desc");
+            throw HttpParserError("HttpMessage", "Empty HTTP resp_desc");
     }
 
     const Yb::String &get_method() const { return method_; }
@@ -85,14 +86,16 @@ public:
     }
 
     void set_response_body(const std::string &body,
-                  const Yb::String &content_type,
+                  const Yb::String &content_type=_T(""),
                   bool set_content_length=true)
     {
         body_ = body;
-        set_header(_T("Content-Type"), content_type);
-        if (set_content_length)
-            set_header(_T("Content-Length"),
-                       Yb::to_string(body.size()));
+        if (!Yb::str_empty(content_type)) {
+            set_header(_T("Content-Type"), content_type);
+            if (set_content_length)
+                set_header(_T("Content-Length"),
+                           Yb::to_string(body.size()));
+        }
     }
 
     const std::string &get_body() const { return body_; }
@@ -194,26 +197,32 @@ private:
 class HttpServerBase
 {
 public:
-    HttpServerBase(int port, Yb::ILogger *root_logger,
+    HttpServerBase(const std::string &ip_addr, int port, int back_log,
+            Yb::ILogger *root_logger,
             const Yb::String &content_type, const std::string &bad_resp);
     void serve();
+
 protected:
     virtual bool has_handler_for_path(const Yb::String &path) = 0;
-    virtual const HttpHeaders call_handler(const HttpHeaders &request) = 0;
+    virtual const HttpMessage call_handler(const HttpMessage &request) = 0;
+
 private:
+    std::string ip_addr_;
     int port_;
+    int back_log_;
     Yb::String content_type_;
     std::string bad_resp_;
     Yb::ILogger::Ptr log_;
     TcpSocket sock_;
+    time_t prev_clean_ts;
 
     static void process(HttpServerBase *server, SOCKET cl_s);
     void process_client_request(SOCKET cl_s);
-    static HttpHeaders make_response(int code, const Yb::String &desc,
+    static HttpMessage make_response(int code, const Yb::String &desc,
                                      const std::string &body,
                                      const Yb::String &cont_type);
     static bool send_response(TcpSocket &cl_sock, Yb::ILogger &logger,
-                              const HttpHeaders &response);
+                              const HttpMessage &response);
     // non-copyable
     HttpServerBase(const HttpServerBase &);
     HttpServerBase &operator=(const HttpServerBase &);
@@ -224,11 +233,12 @@ class HttpServer: public HttpServerBase
 {
 public:
     typedef Yb::Dict<Yb::String, Handler> HandlerMap;
-    HttpServer(int port, const HandlerMap &handlers,
-            Yb::ILogger *root_logger,
+    HttpServer(const std::string &ip_addr, int port, int back_log,
+            const HandlerMap &handlers, Yb::ILogger *root_logger,
             const Yb::String &content_type = _T("text/xml"),
             const std::string &bad_resp = "<status>NOT</status>"):
-        HttpServerBase(port, root_logger, content_type, bad_resp),
+        HttpServerBase(ip_addr, port, back_log, root_logger,
+                       content_type, bad_resp),
         handlers_(handlers)
     {}
 protected:
@@ -236,7 +246,7 @@ protected:
     {
         return handlers_.has(path);
     }
-    virtual const HttpHeaders call_handler(const HttpHeaders &request)
+    virtual const HttpMessage call_handler(const HttpMessage &request)
     {
         Handler func_ptr = handlers_.get(request.get_path());
         return func_ptr(request);

@@ -91,7 +91,8 @@ int run_server_app(const std::string &log_name, const std::string &db_name,
         for (int i = 0; i < n_handlers; ++i)
             handlers[prefix + handlers_array[i].name()] = handlers_array[i];
         MyHttpServer server(
-                port, handlers, &theApp::instance(),
+                "0.0.0.0", port, 10,
+                handlers, &theApp::instance(),
                 error_content_type, error_body);
         server.serve();
     }
@@ -129,7 +130,7 @@ public:
 
     const Yb::String &name() const { return name_; }
 
-    const HttpHeaders operator() (const HttpHeaders &request)
+    const HttpMessage operator() (const HttpMessage &request)
     {
         Yb::ILogger::Ptr logger(theApp::instance().new_logger(NARROW(name_)));
         TimerGuard t(*logger);
@@ -143,26 +144,26 @@ public:
                     theApp::instance().new_session());
             Yb::ElementTree::ElementPtr res = f_(*session, *logger, params);
             session->commit();
-            HttpHeaders response(10, 200, _T("OK"));
+            HttpMessage response(10, 200, _T("OK"));
             response.set_response_body(dump_result(*logger, res), _T("text/json"));
             t.set_ok();
             return response;
         }
         catch (const ApiResult &ex) {
             t.set_ok();
-            HttpHeaders response(10, 200, _T("OK"));
+            HttpMessage response(10, 200, _T("OK"));
             response.set_response_body(dump_result(*logger, ex.result()), _T("text/json"));
             return response;
         }
         catch (const std::exception &ex) {
             logger->error(std::string("exception: ") + ex.what());
-            HttpHeaders response(10, 500, _T("Internal error"));
+            HttpMessage response(10, 500, _T("Internal error"));
             response.set_response_body(dump_result(*logger, mk_resp(default_status_)), _T("text/json"));
             return response;
         }
         catch (...) {
             logger->error("unknown exception");
-            HttpHeaders response(10, 500, _T("Internal error"));
+            HttpMessage response(10, 500, _T("Internal error"));
             response.set_response_body(dump_result(*logger, mk_resp(default_status_)), _T("text/json"));
             return response;
         }
