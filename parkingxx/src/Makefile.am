@@ -17,6 +17,7 @@ bin_SCRIPTS=parkingxx.sh
 
 parkingxx_SOURCES=\
 	tcp_socket.cpp \
+	http_message.cpp \
 	micro_http.cpp \
 	app_class.cpp \
 	helpers.cpp \

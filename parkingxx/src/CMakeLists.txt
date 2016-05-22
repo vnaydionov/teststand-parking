@@ -9,7 +9,7 @@ include_directories (
     ${CMAKE_CURRENT_BINARY_DIR})
 
 add_executable (parkingxx
-    tcp_socket.cpp micro_http.cpp app_class.cpp helpers.cpp main.cpp
+    tcp_socket.cpp http_message.cpp micro_http.cpp app_class.cpp helpers.cpp main.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/domain/Product.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/domain/Order.cpp
 	${CMAKE_CURRENT_BINARY_DIR}/domain/Account.cpp
